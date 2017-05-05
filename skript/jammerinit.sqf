@@ -26,13 +26,13 @@ _jammerActive = _this select 3;
 	  - make jamming range variable
 	  - test if this works with longrange and shortrange.
 	  - a fucking Hacking minigame... (THANKS FROSTY <.<)
-*/
+*/ // <- to do checklist
 
 // creates Action to Jammer to disable it.
-
+if (_jammerActive == true) then {
 	if (isClass(configFile >> "CfgPatches" >> "ace_main")) then
 	{
-	/*
+	/*   // expected Action Parameters as defined by the Ace3 wiki:
 			0: Action name <STRING>
 			1: Name of the action shown in the menu <STRING>
 			2: Icon <STRING>
@@ -43,19 +43,38 @@ _jammerActive = _this select 3;
 			7: Position (Position or Selection Name) <POSITION> or <STRING> (Optional)
 			8: Distance <NUMBER> (Optional)
 			9: Other parameters <ARRAY> (Optional)
-	*/																																								// add function call
-		_action = ["a3f_disable_Jammer", "<t color='#ff0000'>deactivate Jammer</t>", "", [_jammerActive = true] , true] call ace_interact_menu_fnc_createAction;
+	*/	 // <- All Action parameters.
+
+		_action = ["a3f_disable_Jammer", "<t color='#ff0000'>Deactivate Jammer</t>", "", [_jammerActive = true] , true] call ace_interact_menu_fnc_createAction;
 		[_jammer, 0, ["ACE_MainActions"], _action] remoteExec ["ace_interact_menu_fnc_addActionToObject", 0, true];
 
 	}
 	else
-	{/*			AddAction according to wiki:
+	{
+		/*			AddAction according to bohemia wiki:
 				object addAction [title, script, arguments, priority, showWindow, hideOnUse, shortcut, condition, radius, unconscious, selection]
 		*/
 		[_jammer, ["<t color='#ff0000'>deactivate Jammer</t>", jammer_fnc_disableJammer, [], 1.5, true, true, [_jammerActive = true], true, 3, false]] remoteExec ["addAction", 0, true];
 	};
+} else { // if Jammer NOT Active.
 
-// only jam while the Jammer is alive
+	if (isClass(configFile >> "CfgPatches" >> "ace_main")) then
+	{
+		_action = ["a3f_enable_Jammer", "<t color='#ff0000'>Enable Jammer</t>", "", [!_jammerActive] , true] call ace_interact_menu_fnc_createAction;
+		[_jammer, 0, ["ACE_MainActions"], _action] remoteExec ["ace_interact_menu_fnc_addActionToObject", 0, true];
+
+	}
+	else
+	{
+		[_jammer, ["<t color='#ff0000'>Enable Jammer</t>", jammer_fnc_enableJammer, [], 1.5, true, true, [!_jammerActive], true, 3, false]] remoteExec ["addAction", 0, true];
+	};
+};
+
+
+/*
+		Main Program loop
+		aka "the Jamming part."
+*/
 while{alive _jammer }do {
 
 _unitInJammerArea = nearestObjects [_jammer, ["Man"], _jammingRadius];
@@ -63,22 +82,27 @@ _allUnits = allPlayers - entities "HeadlessClient_F";
 
 _notInJammerArea = _allUnits - _unitInJammerArea;
 
-// the actual jamming part
-if !(count _notInJammerArea isEqualTo 0) then {
-	{
-		_x setVariable ["tf_receivingDistanceMultiplicator", 1];
-		_x setVariable ["tf_sendingDistanceMultiplicator", 1];
-	}foreach _notInJammerArea;
+	// the actual jamming part. when the Jammer is Active do the thing. Else check if hacked.
+	if (_jammerActive == true) then {
+
+		if !(count _notInJammerArea isEqualTo 0) then {
+			{
+				_x setVariable ["tf_receivingDistanceMultiplicator", 1];
+				_x setVariable ["tf_sendingDistanceMultiplicator", 1];
+			}foreach _notInJammerArea;
+		};
+
+		// the outside of jamming radius part
+		if !(count _unitInJammerArea isEqualTo 0) then {
+			{
+				_x setVariable ["tf_receivingDistanceMultiplicator", 0];
+				_x setVariable ["tf_sendingDistanceMultiplicator", 0];
+			}foreach _unitInJammerArea;
+		};
+	}; // else if (_JammerHacked) do boost...
+
+sleep 5; // delay between updates. In here because of Performance
+
 };
 
-// the outside of jamming radius part
-if !(count _unitInJammerArea isEqualTo 0) then {
-	{
-		_x setVariable ["tf_receivingDistanceMultiplicator", 0];
-		_x setVariable ["tf_sendingDistanceMultiplicator", 0];
-	}foreach _unitInJammerArea;
-};
-
-sleep 5; // delay between updates.
-
-};
+if(!alive _jammer) exitWith {};
