@@ -1,12 +1,7 @@
-class jammer
+class jammerClass
 {
-	class jammerClass
-	{
-		tag = "jammer";
-		file = "jammer\functions";
-
+	class jammer {
 		class disableJammer {};
-    class enableJammer {};
-		
+	    class enableJammer {};
 	};
 };

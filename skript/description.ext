@@ -1,0 +1,3 @@
+class CfgFunctions {
+#include "cfgFunctions.hpp"
+};
