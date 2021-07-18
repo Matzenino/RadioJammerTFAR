@@ -22,8 +22,8 @@ How to install.
 Check if the mission description loads the cfgFunction file or else you'll get errors!
 3. the Jammer gets initialized by the jammerinit.sqf file.
 The function call is explained inside the file. Here is a short run down of the procedure.
-The Jammer has 3 Parameters:
-The jammer Object, the range of the jammer (the diameter of the surrounding area), the Antenna and
+The Jammer has 5 Parameters:
+The jammer Object, the range of the jammer (the diameter of the surrounding area), the jammer strength (Afects the interference of the radio), the Antenna and
 the jammerActive value. The JammerActive Value is a boolean (a data type that either returns true or false)
 that determines if the jammer is active when it gets spawned or if it is deactivated.
 
@@ -32,7 +32,7 @@ It gets called like this:
 Put the following inside the init line of the trigger or object you want to make the jammer.
 Doesnt really matter. what matters is that the script gets called in the first place. ;)
 
- [jammer, number, antenna, jammerActive] execVM "jammerinit.sqf";
+ [jammer, number, number, antenna, jammerActive] execVM "jammerinit.sqf";
 
 You replace the jammer with the name of the actual jammer object. Note: animals cannot be jammers.
 The Jammer is the controller object of the whole thing. It gets action menu entries that allow you to
