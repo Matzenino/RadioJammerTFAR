@@ -1,12 +1,12 @@
 /*### TFAR Radio Jammer by Matze ###*/
 
-// [jammer, number, antenna, jammerActive] execVM "jammerinit.sqf";
+// [jammer, number, number, antenna, jammerActive] execVM "jammerinit.sqf";
 // Params: jammer object; JammingRadius int; controller object; antenna object;
 
-params ["_jammer",["_jammingRadius", 1500] ,["_antenna", objNull],["_jammerActive", true]];
+params ["_jammer",["_jammingRadius", 1500], ["_jammerStrength", 50] ,["_antenna", objNull],["_jammerActive", true]];
 
 /* Debug for Dedicated Server: Dumps this info as a string into the arma.RPT File in case crashes happen.*/
-diag_log format ["Jammer_fnc_Init: | _jammer: %1 | _jammingRadius: %2 | _antenna: %3 | _jammerActive: %4", _jammer, _jammingRadius, _antenna, _jammerActive];
+diag_log format ["Jammer_fnc_Init: | _jammer: %1 | _jammingRadius: %2 | _jammerStrength: %2 | _antenna: %3 | _jammerActive: %4", _jammer, _jammingRadius, _jammerStrength, _antenna, _jammerActive];
 // comment this out if not needed
 
 if ( isNull _antenna) then {
@@ -93,13 +93,14 @@ if (isServer) then {
 		aka "the Jamming part."
 */
 
-while {alive _jammer && alive _antenna } do {
+while {alive _jammer && alive _antenna } do 
+{
 
-_unitInJammerArea = nearestObjects [_antenna, ["Man"], _jammingRadius];
-_allUnits = allPlayers - entities "HeadlessClient_F";
-_notInJammerArea = _allUnits - _unitInJammerArea;
+	_unitInJammerArea = nearestObjects [_antenna, ["Man"], _jammingRadius];
+	_allUnits = allPlayers - entities "HeadlessClient_F";
+	_notInJammerArea = _allUnits - _unitInJammerArea;
 
-_jammerActive = _jammer getVariable "a3f_jammer_active" ;
+	_jammerActive = _jammer getVariable "a3f_jammer_active" ;
 
 	// the actual jamming part. when the Jammer is Active do the thing. Else check if hacked.
 	if (_jammerActive && alive _antenna && alive _jammer) then {
@@ -115,8 +116,16 @@ _jammerActive = _jammer getVariable "a3f_jammer_active" ;
 
 		if !(count _unitInJammerArea isEqualTo 0) then {
 			{
-				_x setVariable ["tf_receivingDistanceMultiplicator", 0];
-				_x setVariable ["tf_sendingDistanceMultiplicator", 0];
+				_dist = _x distance _antenna;
+				_distPercent = _dist / _jammingRadius;
+				_interference = 1;
+				_sendInterference = 1;
+
+				_interference = _jammerStrength - (_distPercent * _jammerStrength) + 1; // Calculat the recieving interference, which has to be above 1 to have any effect.
+				_sendInterference = 1/_interference; //Calculate the sending interference, which needs to be below 1 to have any effect.
+
+				_x setVariable ["tf_receivingDistanceMultiplicator", _interference];
+				_x setVariable ["tf_sendingDistanceMultiplicator", _sendInterference];
 			}  foreach _unitInJammerArea;
 		};
 	} else { // if Jammer disabled...
@@ -129,8 +138,7 @@ _jammerActive = _jammer getVariable "a3f_jammer_active" ;
 
 	};
 
- sleep 1.5
- ; // delay between updates. In here because of Performance
+	sleep 1.5; // delay between updates. In here because of Performance
 
 }; // Endloop.
 
